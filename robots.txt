@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Block admin panel from indexing
+Disallow: /admin/
+Disallow: /config/
+Disallow: /includes/
+Disallow: /uploads/
+
+# Block common junk paths
+Disallow: /?
+Disallow: /index.php?
+
+# Sitemap location
+Sitemap: https://bambaadventures.co.ke/sitemap.xml

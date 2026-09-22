@@ -1,0 +1,19 @@
+# Normalise line endings. The site runs on Linux; keep LF everywhere and stop
+# Git from rewriting the working copy with CRLF on Windows.
+* text=auto eol=lf
+
+# Media is binary - never touch it
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.mp4  binary
+*.woff binary
+*.woff2 binary
+
+# These must keep their exact bytes
+*.sql diff
+setup.sql  -text
+migrate.sql -text

@@ -1,0 +1,45 @@
+# ---------------------------------------------------------------
+# Live credentials - NEVER commit these
+# ---------------------------------------------------------------
+config/database.php
+config/config.local.php
+.env
+.env.*
+
+# ---------------------------------------------------------------
+# User-uploaded media (added through the admin panel).
+# Hand-placed design assets under uploads/hero/ ARE tracked.
+# ---------------------------------------------------------------
+uploads/*
+!uploads/hero/
+!uploads/hero/**
+
+# ---------------------------------------------------------------
+# Runtime output
+# ---------------------------------------------------------------
+error_log
+*.log
+logs/
+
+# ---------------------------------------------------------------
+# Development scratch files - keep them out even if recreated
+# ---------------------------------------------------------------
+debug.php
+test.php
+diagnose.php
+index1.php
+admin/reset-password.php
+phpinfo.php
+*.bak
+*.old
+*.orig
+
+# ---------------------------------------------------------------
+# Editor / OS noise
+# ---------------------------------------------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/

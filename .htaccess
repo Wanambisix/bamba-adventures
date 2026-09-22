@@ -1,0 +1,79 @@
+DirectoryIndex index.php index.html
+
+RewriteEngine On
+
+# ================================================================
+# SECURITY BLOCK - must stay ABOVE the "serve existing file" rule.
+# That rule ends in [L], so anything after it never runs for a file
+# that exists - which is how config/database.php stayed reachable.
+# ================================================================
+
+# Let's Encrypt validation lives here and must remain reachable
+RewriteRule ^\.well-known/ - [L]
+
+# Never serve dotfiles (.env, .git, .htaccess, editor backups)
+RewriteRule (^|/)\. - [F,L]
+
+# Never serve the application's private directories
+RewriteRule ^(config|includes)/ - [F,L]
+
+# Never serve logs, database dumps or backups
+RewriteRule \.(log|sql|sqlite|sqlite3|bak|old|orig|save|swp|ini|sh|yml|yaml)$ - [F,L]
+RewriteRule (^|/)(error_log|composer\.(json|lock)|package(-lock)?\.json|README\.md|LICENSE|DEPLOY\.md)$ - [F,L]
+
+# ----------------------------------------------------------------
+# Security headers
+# ----------------------------------------------------------------
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# If the request is for an existing file or directory, serve it directly
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Redirect trailing slashes (except for directories)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)/$ /$1 [L,R=301]
+
+# ---- DYNAMIC TOUR DETAIL ----
+RewriteRule ^tour/([^/]+)$ tours/index.php?slug=$1 [L,QSA]
+
+# ---- TOUR CATEGORY LISTING ----
+RewriteRule ^tours/category/([^/]+)$ tours/category/index.php?slug=$1 [L,QSA]
+
+# ---- DYNAMIC DESTINATION DETAIL ----
+RewriteRule ^destination/([^/]+)$ destinations/index.php?slug=$1 [L,QSA]
+
+# ---- DYNAMIC SERVICE DETAIL ----
+RewriteRule ^service/([^/]+)$ services/index.php?slug=$1 [L,QSA]
+
+# ---- DYNAMIC COUNTRY DETAIL ----
+RewriteRule ^country/([^/]+)$ countries/index.php?slug=$1 [L,QSA]
+
+# ---- BLOG ----
+RewriteRule ^blog$ pages/blog.php [L,QSA]
+RewriteRule ^blog/post/([^/]+)$ pages/blog-detail.php?slug=$1 [L,QSA]
+
+# ---- CMS PAGES ----
+RewriteRule ^page/([^/]+)$ pages/page.php?slug=$1 [L,QSA]
+
+# ---- BOOKING ----
+RewriteRule ^book$ pages/book.php [L,QSA]
+
+# ---- ABOUT & FAQ ----
+RewriteRule ^about$ pages/about.php [L,QSA]
+RewriteRule ^faq$ pages/faq.php [L,QSA]
+
+# ---- CANCELLATION POLICY ----
+RewriteRule ^cancellation-policy$ pages/cancellation.php [L,QSA]
+
+# ---- SITEMAP ----
+RewriteRule ^sitemap\.xml$ sitemap.php [L,QSA]
+
+# ---- ADMIN ----
+RewriteRule ^admin$ admin/index.php [L,QSA]
