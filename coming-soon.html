@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>We'll Be Back Soon — Bamba Adventures</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #a02f1d;
+      --primary-dark: #841e22;
+      --accent: #fdb011;
+      --dark: #1a1a1a;
+      --white: #ffffff;
+      --bg: #f9f7f4;
+      --text: #1a1a1a;
+      --text-light: #666;
+      --font-serif: 'Playfair Display', Georgia, serif;
+      --font-sans: 'Inter', -apple-system, sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 24px;
+    }
+
+    .card {
+      background: var(--white);
+      max-width: 620px;
+      width: 100%;
+      padding: 80px 56px 60px;
+      text-align: center;
+      box-shadow: 0 12px 50px rgba(0,0,0,0.09);
+      border-top: 4px solid var(--primary);
+    }
+
+    .logo {
+      margin-top: 20px;
+      margin-bottom: 40px;
+    }
+
+    .logo img {
+      height: 60px;
+      width: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    .icon {
+      width: 68px;
+      height: 68px;
+      background: #fef3ee;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 28px;
+    }
+
+    .icon svg {
+      width: 32px;
+      height: 32px;
+      stroke: var(--primary);
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: 2.2rem;
+      font-weight: 500;
+      color: var(--dark);
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--primary);
+    }
+
+    .subtitle {
+      font-size: 0.97rem;
+      color: var(--text-light);
+      line-height: 1.75;
+      max-width: 420px;
+      margin: 0 auto 40px;
+    }
+
+    .divider {
+      width: 48px;
+      height: 3px;
+      background: var(--accent);
+      margin: 0 auto 40px;
+      border-radius: 2px;
+    }
+
+    .contact-title {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-light);
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .contact-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .contact-list li a {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.92rem;
+      color: var(--text);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .contact-list li a:hover {
+      color: var(--primary);
+    }
+
+    .contact-list li a .ci {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #fef3ee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    .contact-list li a:hover .ci {
+      background: var(--primary);
+    }
+
+    .contact-list li a:hover .ci svg {
+      stroke: #fff;
+    }
+
+    .contact-list li a .ci svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--primary);
+      transition: stroke 0.2s;
+    }
+
+    .wa-item a .ci {
+      background: #e8f9ee !important;
+    }
+
+    .wa-item a .ci svg {
+      stroke: #25D366 !important;
+    }
+
+    .wa-item a:hover .ci {
+      background: #25D366 !important;
+    }
+
+    .wa-item a:hover .ci svg {
+      stroke: #fff !important;
+    }
+
+    .footer-note {
+      margin-top: 48px;
+      padding-top: 28px;
+      border-top: 1px solid #ece9e4;
+      font-size: 0.78rem;
+      color: #aaa;
+    }
+
+    @media (max-width: 560px) {
+      .card { padding: 44px 28px; }
+      h1 { font-size: 1.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <div class="logo">
+    <img src="https://www.bambaadventures.co.ke/assets/images/bamba-logo.png" alt="Bamba Adventures">
+  </div>
+
+  <h1>We're Under <em>Maintenance</em></h1>
+  <p class="subtitle">We're making some improvements to bring you an even better experience. We'll be back shortly — thank you for your patience.</p>
+
+  <div class="divider"></div>
+
+  <p class="contact-title">Need help? Reach us directly</p>
+
+  <ul class="contact-list">
+    <li>
+      <a href="tel:+254706606606">
+        <span class="ci">
+          <svg fill="none" stroke-width="1.8" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+          </svg>
+        </span>
+        +254 706 606 606 &nbsp;·&nbsp; +254 708 808 808 &nbsp;·&nbsp; +254 784 606 606
+      </a>
+    </li>
+    <li>
+      <a href="mailto:info@bambaadventures.co.ke">
+        <span class="ci">
+          <svg fill="none" stroke-width="1.8" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+        </span>
+        info@bambaadventures.co.ke
+      </a>
+    </li>
+    <li class="wa-item">
+      <a href="https://wa.me/254706606606?text=Hello%20Bamba%20Adventures!%20I%20would%20like%20to%20enquire%20about%20your%20tours." target="_blank" rel="noopener">
+        <span class="ci">
+          <svg fill="none" stroke-width="1.8" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/>
+          </svg>
+        </span>
+        Chat with us on WhatsApp
+      </a>
+    </li>
+  </ul>
+
+  <p class="footer-note">&copy; 2026 Bamba Adventures. All rights reserved.</p>
+
+</div>
+
+</body>
+</html>

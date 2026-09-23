@@ -163,6 +163,23 @@ so SSL certificate renewal keeps working.
 
 ---
 
+## File naming: which file is the homepage
+
+Two files matter at the web root, and on the production server they arrived
+under confusing names:
+
+| File | What it is |
+|---|---|
+| `index.php` | **The site.** This is the homepage. On production it was named `index1.php` (a copy of `index.php` was sitting next to it, byte-identical - sha256 `4ed0b157d5da`). It is `index.php` here. |
+| `coming-soon.html` | The standalone "We'll Be Back Soon" holding page. On production this was `index2.html`. It is self-contained (inline CSS), links the logo and a WhatsApp button, and is not linked from anywhere in the site. Use it by pointing the domain at it, or drop it if it is no longer wanted. |
+
+Neither of the production leftovers (`index1.php`, `index2.html`) belongs on the
+server: `index1.php` is a duplicate of `index.php`, and `index2.html` is a
+second crawlable page at the root announcing that the site is down. Delete both.
+`DirectoryIndex index.php index.html` in `.htaccess` means neither could shadow
+the real homepage, which is why the duplication was harmless in practice - but
+it is still two files to keep in sync by hand.
+
 ## Deployment (cPanel)
 
 1. Upload the files into `public_html/` (or the domain's document root).
