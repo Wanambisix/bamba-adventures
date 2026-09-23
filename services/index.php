@@ -1,9 +1,11 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
 $slug = $_GET['slug'] ?? '';
-if (!$slug) { header('Location: /index.php'); exit; }
+if (!$slug) { render_not_found('Service Not Found', 'No service was specified.'); }
 $service = getServiceBySlug($slug);
-if (!$service) { header('Location: /index.php'); exit; }
+if (!$service) {
+    render_not_found('Service Not Found', 'This service is no longer listed. Browse everything we offer instead.');
+}
 $pageTitle = $service['meta_title'] ?: $service['name'] . ' | Bamba Adventures';
 $pageDescription = $service['meta_description'] ?: excerpt($service['description'], 160);
 include __DIR__ . '/../includes/header.php';

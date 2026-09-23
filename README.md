@@ -123,7 +123,34 @@ Everything below was a real finding, not a precaution:
 | **No security headers, errors displayed.** | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` via `.htaccess`; `display_errors=Off` and `expose_php=Off` via `.user.ini`. |
 | **Hard-coded admin password `OLD_DEFAULT_PASSWORD_REDACTED`.** | Replaced with a random password generated on first run and shown once. |
 
+### Hardening and fixes applied (2026-09-23)
+
+Found by running the site locally against a copy of the live database and
+probing the live host.
+
+| Issue | Fix |
+|---|---|
+| **Soft 404s on every detail route.** A missing slug answered `header('Location: /')` — a 302 to the homepage. Google treats "redirect to the homepage" as a soft 404, so `/tour/anything-at-all` looked like a valid page and burnt crawl budget. Six pages did this (`tours`, `services`, `countries`, `destinations`, `tours/category`, `page`). | New `render_not_found()` helper returns a real 404 with `<meta name="robots" content="noindex, follow">`. `pages/blog-detail.php` already did this correctly and was the model. |
+| **Dev router hid the difference.** `router.php` fell back to the homepage for any unmatched URL, so junk URLs returned 200 locally but 404 in production. | Fallback now returns a real 404; `/` is served explicitly. |
+| **Resume uploads trusted the extension** (`in_array($ext, ['pdf','doc','docx'])`), had **no size limit**, and used the client's filename. | `uploadDocument()` / `validate_document_upload()`: PDF (`%PDF`), DOC (OLE2 header) and DOCX (`PK\x03\x04`) magic bytes verified against the claimed extension, 5 MB cap, server-generated filename. |
+| **`PDOException` escaped to the public API.** A bad `career_id` printed a stack trace to the applicant as `Fatal error: Uncaught PDOException...`. `contact` and `volunteer` had the same gap, as did the `/book` and `/contact` forms. | Every public write is wrapped in `try/catch` and returns a clean JSON error (HTTP 500) or an inline form message. |
+| **Orphaned uploads.** The resume was moved before the row was inserted, so a failed insert left the file on disk forever. | The file is unlinked if the insert fails. |
+| **`uploads/` could execute code.** Uploads are content-validated, so a `.php` should never land there — but nothing stopped one running if it did. | `uploads/.htaccess` denies script extensions and strips the PHP handler. Deliberately avoids `Options` and any unguarded `php_flag`, which some hosts reject with a 500. |
+| **No throttle on the public HTML forms.** The JSON API was rate-limited; `/book` and `/contact` were not, and both write to the database. | 5 submissions per IP per 10 minutes, alongside the existing CSRF check. |
+
+**Login lockout, worth knowing:** 5 failed logins lock that IP **and** the
+username out for 15 minutes. The counter is "IP or username", which is good
+against brute force but also means someone can deliberately lock the admin out.
+There is no self-service unlock — either wait 15 minutes or clear the row:
+
+```sql
+DELETE FROM login_attempts WHERE username = 'admin';
+```
+
 Run `php tests/security-test.php` after any change to `includes/functions.php`.
+It covers CSRF, session flags, escaping, rate limiting, image uploads, document
+uploads, the soft-404 regression (it greps the controllers for
+`header('Location: /')`) and `uploads/.htaccess`. Currently **48 passing**.
 
 ### The `.htaccess` security block
 

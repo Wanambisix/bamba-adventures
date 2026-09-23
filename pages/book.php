@@ -27,10 +27,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (empty($data['name']) || empty($data['email'])) {
         $error = 'Name and email are required.';
+    } elseif (!rate_limit($pdo, 'book:' . client_ip(), 5, 10)) {
+        $error = 'You have sent several booking requests already. Please wait a few minutes, or call us directly.';
     } else {
-        $stmt = $pdo->prepare("INSERT INTO bookings (name, email, phone, tour_id, travel_date, adults, children, message) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$data['name'], $data['email'], $data['phone'], $data['tour_id'], $data['travel_date'], $data['adults'], $data['children'], $data['message']]);
-        $success = 'Thank you! Your booking request has been received. Our team will contact you shortly.';
+        try {
+            $stmt = $pdo->prepare("INSERT INTO bookings (name, email, phone, tour_id, travel_date, adults, children, message) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$data['name'], $data['email'], $data['phone'], $data['tour_id'], $data['travel_date'], $data['adults'], $data['children'], $data['message']]);
+            $success = 'Thank you! Your booking request has been received. Our team will contact you shortly.';
+        } catch (Exception $e) {
+            // A DB problem must show the visitor a message, not a PHP fatal.
+            $error = 'We could not save your booking just now. Please try again, or email us directly.';
+        }
     }
 }
 

@@ -16,10 +16,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (empty($name) || empty($email) || empty($message)) {
         $error = 'Name, email and message are required.';
+    } elseif (!rate_limit($pdo, 'contact:' . client_ip(), 5, 10)) {
+        $error = 'You have sent several messages already. Please wait a few minutes, or email us directly.';
     } else {
-        $stmt = $pdo->prepare("INSERT INTO inquiries (name, email, phone, subject, message, page_url) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$name, $email, $phone, $subject, $message, '/contact']);
-        $success = 'Thank you! We have received your message and will respond shortly.';
+        try {
+            $stmt = $pdo->prepare("INSERT INTO inquiries (name, email, phone, subject, message, page_url) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$name, $email, $phone, $subject, $message, '/contact']);
+            $success = 'Thank you! We have received your message and will respond shortly.';
+        } catch (Exception $e) {
+            // A DB problem must show the visitor a message, not a PHP fatal.
+            $error = 'We could not send your message just now. Please try again, or email us directly.';
+        }
     }
 }
 

@@ -55,9 +55,16 @@ switch ($action) {
             exit;
         }
         
-        $stmt = $pdo->prepare("INSERT INTO inquiries (name, email, phone, subject, message, page_url) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$name, $email, $phone, $subject, $message, $pageUrl]);
-        echo json_encode(['success' => true, 'message' => 'Thank you! We have received your message.']);
+        try {
+            $stmt = $pdo->prepare("INSERT INTO inquiries (name, email, phone, subject, message, page_url) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$name, $email, $phone, $subject, $message, $pageUrl]);
+            echo json_encode(['success' => true, 'message' => 'Thank you! We have received your message.']);
+        } catch (Exception $e) {
+            // Never let a PDOException escape: it prints a stack trace with the
+            // DB credentials' context into a public JSON endpoint.
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Could not send your message right now. Please email us instead.']);
+        }
         break;
     
     // ----- VOLUNTEER APPLICATION -----
@@ -78,9 +85,14 @@ switch ($action) {
             exit;
         }
         
-        $stmt = $pdo->prepare("INSERT INTO volunteer_applications (name, email, phone, motivation, availability, skills) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$name, $email, $phone, $motivation, $availability, $skills]);
-        echo json_encode(['success' => true, 'message' => 'Application submitted successfully!']);
+        try {
+            $stmt = $pdo->prepare("INSERT INTO volunteer_applications (name, email, phone, motivation, availability, skills) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$name, $email, $phone, $motivation, $availability, $skills]);
+            echo json_encode(['success' => true, 'message' => 'Application submitted successfully!']);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Could not submit your application right now. Please email us instead.']);
+        }
         break;
     
     // ----- CAREER APPLICATION -----
@@ -97,20 +109,33 @@ switch ($action) {
         }
         
         $resumePath = '';
+        $uploadedPath = null;
         if (!empty($_FILES['resume']['tmp_name'])) {
-            $uploadDir = __DIR__ . '/../uploads/resumes/';
-            if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-            $ext = strtolower(pathinfo($_FILES['resume']['name'], PATHINFO_EXTENSION));
-            if (in_array($ext, ['pdf', 'doc', 'docx'])) {
-                $filename = uniqid() . '_' . preg_replace('/[^a-z0-9.]/', '-', strtolower($_FILES['resume']['name']));
-                move_uploaded_file($_FILES['resume']['tmp_name'], $uploadDir . $filename);
-                $resumePath = 'uploads/resumes/' . $filename;
+            // Content-checked (PDF/DOC/DOCX magic bytes), size-capped and
+            // renamed server-side. This used to trust the client's extension.
+            $up = uploadDocument($_FILES['resume'], 'resumes');
+            if (!isset($up['success'])) {
+                echo json_encode(['success' => false, 'error' => $up['error']]);
+                exit;
             }
+            $resumePath = $up['path'];
+            $uploadedPath = $up['path'];
         }
-        
-        $stmt = $pdo->prepare("INSERT INTO career_applications (career_id, name, email, phone, resume_path, cover_letter) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$careerId, $name, $email, $phone, $resumePath, $coverLetter]);
-        echo json_encode(['success' => true, 'message' => 'Application submitted successfully!']);
+
+        try {
+            $stmt = $pdo->prepare("INSERT INTO career_applications (career_id, name, email, phone, resume_path, cover_letter) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$careerId, $name, $email, $phone, $resumePath, $coverLetter]);
+            echo json_encode(['success' => true, 'message' => 'Application submitted successfully!']);
+        } catch (Exception $e) {
+            // A bad career_id (or any DB error) used to throw out of the switch
+            // and print a PDOException stack trace to the applicant. Roll the
+            // uploaded file back too, so a failed application leaves no orphan.
+            if ($uploadedPath !== null) {
+                @unlink(__DIR__ . '/../' . $uploadedPath);
+            }
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Could not submit your application right now. Please try again shortly.']);
+        }
         break;
     
     default:

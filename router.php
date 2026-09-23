@@ -21,6 +21,8 @@ if ($uri !== '/' && substr($uri, -1) === '/' && !is_dir($root . $uri)) {
 
 // 3) Pretty routes (mirror .htaccess)
 $routes = [
+    '#^/$#'                                => 'index.php',
+    '#^/index\\.php$#'                     => 'index.php',
     '#^/tour/([^/]+)$#'                    => 'tours/index.php?slug=$1',
     '#^/tours$#'                           => 'pages/tours.php',
     '#^/tours/$#'                          => 'pages/tours.php',
@@ -67,12 +69,17 @@ if (preg_match('#^/admin/([^/]+)$#', $uri, $m)) {
     }
 }
 
-// 5) Fallback -> homepage
-$home = $root . '/index.php';
-if (file_exists($home)) {
-    chdir(dirname($home));
-    require $home;
-    exit;
+// 5) Nothing matched -> real 404.
+//    Apache/LiteSpeed do NOT fall back to the homepage for an unmatched URL;
+//    they return 404. This router used to serve the homepage here, which made
+//    every invented URL look like a valid 200 page during local testing and
+//    hid the difference between dev and production.
+$fn = $root . '/includes/functions.php';
+if (file_exists($fn)) {
+    chdir($root);
+    require_once $fn;
+    render_not_found('Page Not Found', 'That page does not exist. Try the menu above, or start from the homepage.');
 }
 http_response_code(404);
-echo 'index.php is missing.';
+header('Content-Type: text/plain; charset=utf-8');
+echo '404 Not Found';

@@ -32,7 +32,7 @@ $_ogType   = $ogType ?? 'website';
 ?>
     <!-- Canonical & Robots -->
     <link rel="canonical" href="<?= esc($_canon) ?>">
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="<?= esc(isset($robotsMeta) ? $robotsMeta : 'index, follow') ?>">
 
     <!-- Open Graph -->
     <meta property="og:type"         content="<?= esc($_ogType) ?>">

@@ -2,10 +2,12 @@
 require_once __DIR__ . '/../includes/functions.php';
 
 $slug = $_GET['slug'] ?? '';
-if (!$slug) { header('Location: /index.php'); exit; }
+if (!$slug) { render_not_found('Tour Not Found', 'No tour was specified.'); }
 
 $tour = getTourBySlug($slug);
-if (!$tour) { header('Location: /index.php'); exit; }
+if (!$tour) {
+    render_not_found('Tour Not Found', 'This tour is no longer available. Browse our current safaris and holiday packages instead.');
+}
 
 // ── AJAX booking handler ──────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'book_tour') {

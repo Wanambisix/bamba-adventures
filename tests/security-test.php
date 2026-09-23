@@ -90,5 +90,74 @@ t('uploadImage refuses a non-HTTP upload',
   uploadImage(['name' => 'photo.jpg', 'tmp_name' => '/etc/passwd', 'size' => 20])['error'] === 'No file uploaded');
 unlink($txt);
 
-echo "\n== result: $pass passed, $fail failed ==\n";
+echo "\n== document uploads (career resumes) ==\n";
+// NOTE for anyone editing these fixtures: the "PHP source" one must not contain
+// "$_GET" or similar. On this Windows host Defender treats that as a webshell
+// signature, quarantines the temp file, and the next read returns false - which
+// makes the assertion fail with "Could not read that file" instead of the
+// magic-byte error. Nothing to do with the code under test: the same bytes
+// uploaded over real HTTP are rejected correctly.
+function fixture($prefix, $content) {
+    $p = tempnam(sys_get_temp_dir(), $prefix);
+    $h = fopen($p, 'wb');
+    fwrite($h, $content);
+    fclose($h);
+    return $p;
+}
+
+$php  = fixture('fixt', "<?php echo 'this is not a pdf at all'; ?>");
+$pdf  = fixture('fixt', "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n");
+$docx = fixture('fixt', "PK\x03\x04" . str_repeat("\x00", 60));
+$doc  = fixture('fixt', "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1" . str_repeat("\x00", 60));
+
+t('rejects a .php by extension',
+  validate_document_upload(['name' => 'shell.php', 'tmp_name' => $php, 'size' => 30])['error'] === 'Invalid file type. Please upload a PDF, DOC or DOCX.');
+t('rejects PHP source renamed to .pdf',
+  validate_document_upload(['name' => 'cv.pdf', 'tmp_name' => $php, 'size' => 30])['error'] === 'That file does not look like a valid PDF document.');
+t('rejects a .docx whose bytes are not a zip',
+  validate_document_upload(['name' => 'cv.docx', 'tmp_name' => $php, 'size' => 30])['error'] === 'That file does not look like a valid DOCX document.');
+t('rejects an oversized resume',
+  validate_document_upload(['name' => 'cv.pdf', 'tmp_name' => $pdf, 'size' => 6 * 1024 * 1024])['error'] === 'File too large (max 5MB)');
+$r = validate_document_upload(['name' => 'My CV 2026.pdf', 'tmp_name' => $pdf, 'size' => filesize($pdf)]);
+t('accepts a real PDF', !isset($r['error']) && $r['ext'] === 'pdf');
+t('accepts a real .docx', (validate_document_upload(['name' => 'cv.docx', 'tmp_name' => $docx, 'size' => filesize($docx)])['ext'] ?? '') === 'docx');
+t('accepts a real .doc', (validate_document_upload(['name' => 'cv.doc', 'tmp_name' => $doc, 'size' => filesize($doc)])['ext'] ?? '') === 'doc');
+t('sanitises the resume slug', ($r['slug'] ?? '') === 'my-cv-2026');
+t('uploadDocument refuses a non-HTTP upload',
+  uploadDocument(['name' => 'cv.pdf', 'tmp_name' => $pdf, 'size' => 10])['error'] === 'No file uploaded');
+unlink($php); unlink($pdf); unlink($docx); unlink($doc);
+
+echo "\n== soft 404s (SEO) ==\n";
+$root = dirname(__DIR__);
+t('render_not_found() exists', function_exists('render_not_found'));
+$controllers = ['tours/index.php', 'services/index.php', 'countries/index.php',
+                'destinations/index.php', 'tours/category/index.php', 'pages/page.php'];
+$redirectors = [];
+foreach ($controllers as $c) {
+    $src = file_get_contents($root . '/' . $c);
+    // The old bug: a missing slug answered with a redirect to the homepage,
+    // which search engines treat as a soft 404.
+    if (preg_match('#header\(\s*[\'"]Location:\s*/#', $src)) $redirectors[] = $c;
+}
+t('no detail page redirects to the homepage on a missing slug', $redirectors === []);
+if ($redirectors) echo '        still redirecting: ' . implode(', ', $redirectors) . "\n";
+
+// The old dev router fell back to the homepage for any unmatched URL, which
+// hid the dev/prod difference and made junk URLs return 200.
+$router = file_get_contents($root . '/router.php');
+t('dev router does not fall back to the homepage', !preg_match('#//\s*5\)\s*Fallback -> homepage#', $router));
+t('dev router serves the homepage for /', (bool) preg_match("#'\#\^/\\\$\#'#", $router));
+t('header.php supports a noindex meta', str_contains(file_get_contents($root . '/includes/header.php'), 'isset($robotsMeta)'));
+
+echo "\n== uploads directory cannot execute code ==\n";
+$uht = $root . '/uploads/.htaccess';
+t('uploads/.htaccess exists', is_file($uht));
+if (is_file($uht)) {
+    $u = file_get_contents($uht);
+    t('denies .php in uploads', (bool) preg_match('/FilesMatch.*php/i', $u));
+    t('strips the PHP handler', str_contains($u, 'RemoveHandler'));
+    t('avoids Options (which some hosts reject with a 500)', !preg_match('/^\s*Options\s/m', $u));
+}
+
+echo "\n== " . $pass . ' passed, ' . $fail . " failed ==\n";
 exit($fail === 0 ? 0 : 1);

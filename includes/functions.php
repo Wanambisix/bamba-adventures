@@ -114,6 +114,42 @@ function render_flash() {
     return '<div class="' . $class . '">' . esc($f['message']) . '</div>';
 }
 
+// ----- 404 -----------------------------------------------------------------
+// Detail pages used to answer a missing slug with header('Location: /'), i.e.
+// a 302 to the homepage. Search engines treat "redirect to the homepage" as a
+// soft 404, so every invented URL (/tour/anything-at-all) returned a 200-class
+// page and burnt crawl budget. This renders a real 404 with noindex instead,
+// matching what pages/blog-detail.php already did correctly.
+function render_not_found($title, $message = null, $links = true) {
+    http_response_code(404);
+
+    $pageTitle       = $title . ' | Bamba Adventures';
+    $pageDescription = $message ?: 'The page you are looking for could not be found.';
+    $robotsMeta      = 'noindex, follow';   // never index a 404
+
+    // Callers may be either the shared-header pages or the standalone ones;
+    // this always renders through the shared header/footer so the 404 looks
+    // like the rest of the site.
+    if (!headers_sent()) {
+        header($_SERVER['SERVER_PROTOCOL'] . ' 404 Not Found');
+    }
+
+    include __DIR__ . '/header.php';
+
+    echo '<section style="max-width:900px;margin:0 auto;padding:9rem 5% 6rem;text-align:center;">';
+    echo '<p style="font-family:var(--font-serif);font-size:4rem;line-height:1;color:var(--primary);margin-bottom:1rem;">404</p>';
+    echo '<h1 style="font-family:var(--font-serif);font-size:clamp(1.6rem,3.5vw,2.4rem);color:var(--primary-dark);margin-bottom:1rem;">' . esc($title) . '</h1>';
+    echo '<p style="color:var(--text-light);line-height:1.8;font-size:1.05rem;max-width:520px;margin:0 auto 2rem;">' . esc($pageDescription) . '</p>';
+    if ($links) {
+        echo '<p><a href="/" style="display:inline-block;padding:0.9rem 2rem;background:var(--primary);color:#fff;border-radius:50px;text-decoration:none;font-weight:600;margin:0 0.3rem 0.6rem;">Back to Homepage</a>';
+        echo '<a href="/tours" style="display:inline-block;padding:0.9rem 2rem;border:2px solid var(--primary);color:var(--primary);border-radius:50px;text-decoration:none;font-weight:600;margin:0 0.3rem 0.6rem;">Browse Tours</a></p>';
+    }
+    echo '</section>';
+
+    include __DIR__ . '/footer.php';
+    exit;
+}
+
 // ----- SECURITY: response headers -----------------------------------------
 function security_headers($isAdmin = false) {
     if (headers_sent()) return;
@@ -546,6 +582,65 @@ function uploadImage($file, $subdir = '') {
     $path = $uploadDir . $filename;
 
     if (move_uploaded_file($file['tmp_name'], $path)) {
+        return ['success' => true, 'path' => 'uploads/' . ($subdir ? $subdir . '/' : '') . $filename];
+    }
+    return ['error' => 'Upload failed'];
+}
+
+// Documents (career-application resumes). Same shape as validate_image_upload:
+// the extension is only a claim, so the leading bytes are checked against it.
+// Previously the API trusted the extension alone and had no size limit at all.
+function validate_document_upload($file, $maxBytes = 5242880) {
+    if (empty($file['name'])) return ['error' => 'No file uploaded'];
+
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $allowed = ['pdf', 'doc', 'docx'];
+    if (!in_array($ext, $allowed, true)) {
+        return ['error' => 'Invalid file type. Please upload a PDF, DOC or DOCX.'];
+    }
+
+    $base = strtolower(pathinfo($file['name'], PATHINFO_FILENAME));
+    if (preg_match('/\.(php|phtml|phar|php[0-9]|htaccess|pl|py|cgi|sh|asp|aspx|jsp)$/', $base)) {
+        return ['error' => 'Invalid file name'];
+    }
+
+    if (($file['size'] ?? 0) > $maxBytes) return ['error' => 'File too large (max 5MB)'];
+
+    $sig = null;
+    if (!empty($file['tmp_name']) && is_file($file['tmp_name'])) {
+        $fh = @fopen($file['tmp_name'], 'rb');
+        if ($fh) { $sig = fread($fh, 8); fclose($fh); }
+    }
+    if (!is_string($sig) || $sig === '') return ['error' => 'Could not read that file'];
+
+    $isPdf = strncmp($sig, '%PDF', 4) === 0;
+    $isZip = strncmp($sig, "PK\x03\x04", 4) === 0;                          // .docx / OOXML
+    $isOle = strncmp($sig, "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1", 8) === 0;   // legacy .doc
+
+    $matches = ($ext === 'pdf' && $isPdf) || ($ext === 'doc' && $isOle) || ($ext === 'docx' && $isZip);
+    if (!$matches) {
+        return ['error' => 'That file does not look like a valid ' . strtoupper($ext) . ' document.'];
+    }
+
+    return ['ext' => $ext, 'slug' => trim(preg_replace('/[^a-z0-9]+/', '-', $base), '-')];
+}
+
+function uploadDocument($file, $subdir = 'resumes') {
+    $uploadDir = __DIR__ . '/../uploads/' . ($subdir ? $subdir . '/' : '');
+    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+    if (empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+        return ['error' => 'No file uploaded'];
+    }
+
+    $v = validate_document_upload($file);
+    if (isset($v['error'])) return $v;
+
+    $filename = bin2hex(random_bytes(6))
+              . ($v['slug'] !== '' ? '_' . substr($v['slug'], 0, 60) : '')
+              . '.' . $v['ext'];
+
+    if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
         return ['success' => true, 'path' => 'uploads/' . ($subdir ? $subdir . '/' : '') . $filename];
     }
     return ['error' => 'Upload failed'];

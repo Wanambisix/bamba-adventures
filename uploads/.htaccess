@@ -1,0 +1,25 @@
+# ================================================================
+# /uploads/  -  user-supplied files. NEVER serve one as code.
+# ================================================================
+# Every image is validated by content, and resumes by magic bytes, so a
+# .php should never land in here. This is the last line of defence: if one
+# ever does, it gets refused rather than executed.
+#
+# Kept deliberately conservative so it cannot break the site: no Options
+# directive (some hosts reject it in .htaccess and return 500), and every
+# block is guarded.
+
+<IfModule mod_mime.c>
+    RemoveHandler .php .phtml .phar .php3 .php4 .php5 .php7 .php8 .cgi .pl .py .sh .asp .aspx .jsp
+    AddType text/plain .php .phtml .phar .php3 .php4 .php5 .php7 .php8 .cgi .pl .py .sh .asp .aspx .jsp
+</IfModule>
+
+<FilesMatch "\.(?i:php|phtml|phar|php[0-9]|cgi|pl|py|sh|asp|aspx|jsp|htaccess|htpasswd)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>

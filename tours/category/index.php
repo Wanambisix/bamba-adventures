@@ -1,10 +1,12 @@
 <?php
 require_once __DIR__ . '/../../includes/functions.php';
 $slug = $_GET['slug'] ?? '';
-if (!$slug) { header('Location: /'); exit; }
+if (!$slug) { render_not_found('Category Not Found', 'No category was specified.'); }
 
 $category = getTourCategoryBySlug($slug);
-if (!$category) { header('Location: /'); exit; }
+if (!$category) {
+    render_not_found('Category Not Found', 'That tour category does not exist. Browse all our tours instead.');
+}
 
 $pageTitle = $category['name'] . ' Tours | Bamba Adventures';
 $tours = getToursByCategorySlug($slug);

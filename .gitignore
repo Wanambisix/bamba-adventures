@@ -13,6 +13,8 @@ config/config.local.php
 uploads/*
 !uploads/hero/
 !uploads/hero/**
+# uploads/.htaccess is part of the hardening - it denies script execution there
+!uploads/.htaccess
 
 # ---------------------------------------------------------------
 # Runtime output

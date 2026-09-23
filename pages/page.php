@@ -2,10 +2,12 @@
 require_once __DIR__ . '/../includes/functions.php';
 
 $slug = $_GET['slug'] ?? '';
-if (!$slug) { header('Location: /'); exit; }
+if (!$slug) { render_not_found('Page Not Found', 'No page was specified.'); }
 
 $page = getPageBySlug($slug);
-if (!$page) { header('Location: /'); exit; }
+if (!$page) {
+    render_not_found('Page Not Found', 'That page does not exist or has been moved. Try the menu above, or start from the homepage.');
+}
 
 $pageTitle = $page['meta_title'] ?: $page['title'] . ' | Bamba Adventures';
 ?>

@@ -1,10 +1,12 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
 $slug = $_GET['slug'] ?? '';
-if (!$slug) { header('Location: /'); exit; }
+if (!$slug) { render_not_found('Country Not Found', 'No country was specified.'); }
 
 $country = getCountryBySlug($slug);
-if (!$country) { header('Location: /'); exit; }
+if (!$country) {
+    render_not_found('Country Not Found', 'We do not have a page for that country yet. Browse our destinations instead.');
+}
 
 $pageTitle = $country['name'] . ' | Bamba Adventures';
 $tours = getTours(['country_id' => $country['id'], 'status' => 'active']);
