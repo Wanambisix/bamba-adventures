@@ -90,7 +90,7 @@ following are deliberate:
   credentials — create the real config file yourself.
 - **No hard-coded admin password.** `admin/index.php` generates a random
   bootstrap password on first run and shows it once. It was previously
-  `OLD_DEFAULT_PASSWORD_REDACTED`, which must not be used again.
+  the old default password (redacted here on purpose - see the note below), which must not be used again.
 - **No password-reset tool.** An `admin/reset-password.php` used to exist. It
   reset any admin's password with **no authentication at all** — anyone who
   found it could take over the admin panel. It has been deleted and is listed in
@@ -121,7 +121,7 @@ Everything below was a real finding, not a precaution:
 | **`sitemap.php` fatal error** when the DB is down (`Call to a member function query() on null` — `Error` is not caught by `catch (Exception)`). | Null-guarded, `catch (Throwable)`. |
 | **`.htaccess` directory block was unreachable** — it sat after a rule ending in `[L]`, so `config/database.php` was fetchable. | Block moved to the top and widened to dotfiles, logs, SQL dumps and backups. `.well-known` exempted for SSL renewal. |
 | **No security headers, errors displayed.** | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` via `.htaccess`; `display_errors=Off` and `expose_php=Off` via `.user.ini`. |
-| **Hard-coded admin password `OLD_DEFAULT_PASSWORD_REDACTED`.** | Replaced with a random password generated on first run and shown once. |
+| **Hard-coded default admin password.** | Replaced with a random password generated on first run and shown once. |
 
 ### Hardening and fixes applied (2026-09-23)
 
